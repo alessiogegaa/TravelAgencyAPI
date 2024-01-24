@@ -40,41 +40,51 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   const loginUser = async (req, res) => {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
   
-    if (!email || !password) {
-      res.status(400);
-      throw new Error('All fields are mandatory');
-    }
+      if (!email || !password) {
+        res.status(400);
+        throw new Error('All fields are mandatory');
+      }
   
-    const getUserQuery = 'SELECT * FROM Users WHERE email = ?';
-    const [userResult] = await db.query(getUserQuery, [email]);
+      const getUserQuery = 'SELECT * FROM Users WHERE email = ?';
+      const [userResult] = await db.query(getUserQuery, [email]);
   
-    if (userResult.length === 0) {
-      throw new Error('Invalid email or password');
-    }
+      if (userResult.length === 0) {
+        throw new Error('Invalid email or password');
+      }
   
-    const user = userResult[0];
-    const passwordMatch = await bcrypt.compare(password, user.password);
+      const user = userResult[0];
+      console.log('User from database:', user);
   
-    if (!passwordMatch) {
-      throw new Error('Email or password invalid!');
-    }
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      console.log('Password match:', passwordMatch);
   
-    const accessToken = jwt.sign(
-      {
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
+      if (!passwordMatch) {
+        throw new Error('Email or password invalid!');
+      }
+  
+      const accessToken = jwt.sign(
+        {
+          user: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+          },
         },
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '5m' }
-    );
-    res.status(200).json({ accessToken,role: user.role });
-    
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: '5m' }
+      );
+      
+      console.log('Login successful!');
+      res.status(200).json({ accessToken, role: user.role });
+    } catch (error) {
+      console.error('Login failed:', error.message);
+      res.status(401).json({ error: error.message });
+    }
   };
+  
   const currentUser = asyncHandler(async (req, res) => {
     res.json(req.user);
   });
