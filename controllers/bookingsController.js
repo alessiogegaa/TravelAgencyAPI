@@ -6,13 +6,24 @@ const db = require('../db');
 const app = express();
 app.use(bodyParser.json());
 const getBooking = asyncHandler(async (req, res) => {
-    try {
-        const [rows, fields] = await db.query("SELECT * from bookings");
-        res.json(rows);
-    } catch (err) {
-        console.error('Database query failed', err);
-        res.status(500).send('Internal Server Error');
-    }
+  try {
+      const userId = req.query.user_id; 
+      const isAdmin = req.query.role === 'admin'; 
+
+      let query = "SELECT * FROM bookings";
+      const queryParams = [];
+
+      if (!isAdmin) {
+          query += " WHERE user_id = ?";
+          queryParams.push(userId);
+      }
+
+      const [rows, fields] = await db.query(query, queryParams);
+      res.json(rows);
+  } catch (err) {
+      console.error('Database query failed', err);
+      res.status(500).send('Internal Server Error');
+  }
 });
 
 const postBooking = asyncHandler(async (req, res) => {
@@ -37,7 +48,7 @@ const postBooking = asyncHandler(async (req, res) => {
 const putBooking = asyncHandler(async (req, res) => {
     const bookingId = req.params.id;
     const updatedBooking = req.body;
-
+   
     try {
         
         const columnsToUpdate = Object.keys(updatedBooking).map(column => `${column} = ?`).join(', ');

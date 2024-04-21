@@ -74,11 +74,11 @@ const registerUser = asyncHandler(async (req, res) => {
           },
         },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '5m' }
+        { expiresIn: '15m' }
       );
       
       console.log('Login successful!');
-      res.status(200).json({ accessToken, role: user.role });
+      res.status(200).json({ accessToken, role: user.role, id:user.id });
     } catch (error) {
       console.error('Login failed:', error.message);
       res.status(401).json({ error: error.message });
